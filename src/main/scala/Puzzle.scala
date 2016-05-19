@@ -162,19 +162,23 @@ object Puzzle {
       case p: ImpossiblePuzzle => solved
       case p: UnsolvedPuzzle =>
 
-          val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(p).head
-          val loc = locCellWithLeastPossibleOptions.keys.head
-          val cell = locCellWithLeastPossibleOptions.values.head
-          val possiblePuzzles = cell.possibleVals.map(
-            possibleValue => {
-              p.setCell(loc, possibleValue)
-            }
-          )
-          possiblePuzzles.flatMap {
+        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(p).head
+        val loc = locCellWithLeastPossibleOptions.keys.head
+        val cell = locCellWithLeastPossibleOptions.values.head
+        cell.possibleVals.map(
+          possibleValue => {
+            p.setCell(loc, possibleValue)
+          }
+        ).flatMap(
+          p => p match {
             case p: SolvedPuzzle => p :: solved
             case p: UnsolvedPuzzle => Puzzle.solve(p)
             case _ => solved
           }
+        ).takeWhile {
+          case p: UnsolvedPuzzle => true
+          case _ => false
+        }
       }
   }
 
@@ -272,33 +276,33 @@ object Test{
       .setCell(Loc(9,6), 9)
       .setCell(Loc(9,8), 6)
 
-    println(pTest)
-
     assert(pTest.isSolved)
-//    assert(Cell().value == ValueNotKnown())
-//    assert(Cell(1).value == KnownValue(1))
-//    assert(Cell(4).value == KnownValue(4))
-//    assert(Cell(5).value == KnownValue(5))
-//    assert(Cell(1,2).value == ValueNotKnown())
-//    assert(Loc(2,1) == Loc(2, 1))
+    assert(Cell().value == ValueNotKnown())
+    assert(Cell(1).value == KnownValue(1))
+    assert(Cell(4).value == KnownValue(4))
+    assert(Cell(5).value == KnownValue(5))
+    assert(Cell(1,2).value == ValueNotKnown())
+    assert(Loc(2,1) == Loc(2, 1))
 
     println("Start: " + Calendar.getInstance().getTime)
 
-    val pTest2 = FilePuzzleIO.read("test.puzzle")
-    assert(!pTest2.isSolved)
-
-    val solved = Puzzle.solve(pTest2)
-    solved.foreach(p => assert(p.isSolved))
-    println("End: " + Calendar.getInstance().getTime)
-
-    val pHardest = FilePuzzleIO.read("hardest.puzzle")
-    println("hardest puzzle start: " + Calendar.getInstance().getTime)
-    Puzzle.solve(pHardest).foreach(
-      p => {
-        println(p)
-        assert(p.isSolved)
-      }
-    )
-    println("hardest puzzle end: " + Calendar.getInstance().getTime)
+//    val pTest2 = FilePuzzleIO.read("test.puzzle")
+//    println(pTest2)
+//    assert(!pTest2.isSolved)
+//
+//    val solved = Puzzle.solve(pTest2)
+//    println(solved)
+//    solved.foreach(p => assert(p.isSolved))
+//    println("End: " + Calendar.getInstance().getTime)
+//
+//    val pHardest = FilePuzzleIO.read("hardest.puzzle")
+//    println("hardest puzzle start: " + Calendar.getInstance().getTime)
+//    Puzzle.solve(pHardest).foreach(
+//      p => {
+//        println(p)
+//        assert(p.isSolved)
+//      }
+//    )
+//    println("hardest puzzle end: " + Calendar.getInstance().getTime)
   }
 }
