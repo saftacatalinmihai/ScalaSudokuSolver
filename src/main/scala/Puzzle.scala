@@ -12,8 +12,8 @@ abstract class Puzzle {
   def isSolved: Boolean
   def isImpossible: Boolean
   def setCell(loc: Loc, v: Value): Puzzle = {
-    // Can't set the same cell twice
-    if (this.cells(loc).value == v) return new ImpossiblePuzzle(this.cells)
+    // Setting the same cell again does nothing
+    if (this.cells(loc).value == v) return this
 
     val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
     Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(

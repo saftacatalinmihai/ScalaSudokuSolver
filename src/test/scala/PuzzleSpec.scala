@@ -32,21 +32,39 @@ class PuzzleSpec extends FlatSpec with Matchers{
     p.knownCells.values.toList.length should be (1)
   }
 
-  it should "be set as impossible if trying to set the same cell twice" in {
+  it should "do nothing if trying to set the same cell again" in {
     val p = Puzzle()
       .setCell(Loc(1,1), 1)
 
-    val impossiblePuzzle = p.setCell(Loc(1,1),1)
-    impossiblePuzzle should be (ImpossiblePuzzle(impossiblePuzzle.cells))
+    val samePuzzle = p.setCell(Loc(1,1),1)
+    samePuzzle should be (UnsolvedPuzzle(samePuzzle.cells))
+    p should be (samePuzzle)
   }
 
-  it should "be set as impossible if trying to set 2 dependent cells to the same value" in {
+  ignore should "be set as impossible if trying to set 2 dependent cells to the same value" in {
     val p = Puzzle()
-      .setCell(Loc(4,5), 1)
 
-    val impossible = p.setCell(Loc(5,6), 1)
-    impossible should be (ImpossiblePuzzle(impossible.cells))
+    for {
+      i <- 1 to 9
+      j <- 1 to 9
+      n <- 1 to 9
+    } {
+      val setPuzzle = p.setCell(Loc(i, j), n)
+      for (depLoc <- Puzzle.dependentLocs(Loc(i, j))){
+        val impossible = setPuzzle.setCell(depLoc, n)
+        impossible should be (ImpossiblePuzzle(impossible.cells))
+      }
+    }
+  }
 
+  "Dependent cells" should "be correct" in {
+    for {
+      i <- 1 to 9
+      j <- 1 to 9
+    } {
+      val dep = Puzzle.dependentLocs(Loc(i,j))
+      dep.forall( l => Puzzle.dependentLocs(l).contains(l))
+    }
   }
 
 }
