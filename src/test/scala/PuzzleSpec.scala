@@ -40,4 +40,13 @@ class PuzzleSpec extends FlatSpec with Matchers{
     impossiblePuzzle should be (ImpossiblePuzzle(impossiblePuzzle.cells))
   }
 
+  it should "be set as impossible if trying to set 2 dependent cells to the same value" in {
+    val p = Puzzle()
+      .setCell(Loc(4,5), 1)
+
+    val impossible = p.setCell(Loc(5,6), 1)
+    impossible should be (ImpossiblePuzzle(impossible.cells))
+
+  }
+
 }
