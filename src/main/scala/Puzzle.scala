@@ -12,6 +12,9 @@ abstract class Puzzle {
   def isSolved: Boolean
   def isImpossible: Boolean
   def setCell(loc: Loc, v: Value): Puzzle = {
+//    println(this)
+    println(s"Setting $loc to $v")
+
     // Setting the same cell again does nothing
     if (this.cells(loc).value == v) return this
 
@@ -136,23 +139,6 @@ object Puzzle {
         c.isKnown
       }
     }
-//  def removeValOfKnownCellsFromDependentCells(p: Puzzle): Puzzle = {
-//    val toSetList = for {
-//        (loc, cell) <- p.knownCells
-//        dependentPos <- Puzzle.dependentLocs(loc)
-//        if !p.cells(dependentPos).isKnown
-//      } yield Pair(dependentPos, cell)
-//
-////    println("iter")
-//    val pReduced = toSetList.foldLeft( p )((pn: Puzzle, toSet) => {
-//      val (l, c) = (toSet.l, toSet.c)
-//      if (!p.cells(l).isKnown) pn.removePossibleValFromCell(l, c.value) else pn
-//    })
-//
-//    if ( pReduced != p) Puzzle.removeValOfKnownCellsFromDependentCells(pReduced)
-//    else pReduced
-//
-//  }
 
   // TODO: tail recursive with acc
   def solve(p: Puzzle, solved: List[Puzzle] = List()): List[Puzzle] = {
@@ -169,16 +155,7 @@ object Puzzle {
           possibleValue => {
             p.setCell(loc, possibleValue)
           }
-        ).flatMap(
-          p => p match {
-            case p: SolvedPuzzle => p :: solved
-            case p: UnsolvedPuzzle => Puzzle.solve(p)
-            case _ => solved
-          }
-        ).takeWhile {
-          case p: UnsolvedPuzzle => true
-          case _ => false
-        }
+        ).flatMap(Puzzle.solve(_))
       }
   }
 
@@ -286,14 +263,14 @@ object Test{
 
     println("Start: " + Calendar.getInstance().getTime)
 
-//    val pTest2 = FilePuzzleIO.read("test.puzzle")
-//    println(pTest2)
-//    assert(!pTest2.isSolved)
-//
-//    val solved = Puzzle.solve(pTest2)
-//    println(solved)
-//    solved.foreach(p => assert(p.isSolved))
-//    println("End: " + Calendar.getInstance().getTime)
+    val pTest2 = FilePuzzleIO.read("test.puzzle")
+    println(pTest2)
+    assert(!pTest2.isSolved)
+
+    val solved = Puzzle.solve(pTest2)
+    println(solved)
+    solved.foreach(p => assert(p.isSolved))
+    println("End: " + Calendar.getInstance().getTime)
 //
 //    val pHardest = FilePuzzleIO.read("hardest.puzzle")
 //    println("hardest puzzle start: " + Calendar.getInstance().getTime)
