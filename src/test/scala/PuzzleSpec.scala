@@ -67,4 +67,49 @@ class PuzzleSpec extends FlatSpec with Matchers{
     }
   }
 
+  "A puzzle" should "be read from file" in {
+    val p = FilePuzzleIO.read("test.puzzle")
+    p should be (UnsolvedPuzzle(p.cells))
+  }
+
+  it should "be impossible to set the value of a dependent cell to that of the cell" in {
+    val p = FilePuzzleIO.read("test.puzzle")
+    List(
+      Loc(1,2),
+      Loc(1,3),
+      Loc(2,1),
+      Loc(2,2),
+      Loc(5,1),
+      Loc(7,1)
+    ).map( p.setCell(_, 4))
+     .foreach( p => p should be (ImpossiblePuzzle(p.cells)))
+
+    List(
+      Loc(4,5),
+      Loc(1,4),
+      Loc(3,4),
+      Loc(4,7),
+      Loc(4,6),
+      Loc(5,6),
+      Loc(4,7)
+    ).map( p.setCell(_, 2))
+      .foreach( pn => pn should be (ImpossiblePuzzle(pn.cells)))
+
+    List(
+      Loc(7,4),
+      Loc(7,5),
+      Loc(7,6),
+      Loc(8,5),
+      Loc(9,4),
+      Loc(9,5),
+      Loc(9,6),
+      Loc(8,1),
+      Loc(8,9),
+      Loc(1,4),
+      Loc(9,4)
+    ).map( p.setCell(_, 4))
+      .foreach( pn => pn should be (ImpossiblePuzzle(pn.cells)))
+
+
+  }
 }

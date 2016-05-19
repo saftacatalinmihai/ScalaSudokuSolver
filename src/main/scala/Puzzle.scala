@@ -13,27 +13,32 @@ abstract class Puzzle {
   def isImpossible: Boolean
   def setCell(loc: Loc, v: Value): Puzzle = {
 //    println(this)
-    println(s"Setting $loc to $v")
+//    println(s"Setting $loc to $v")
+    this.cells(loc) match {
+      case c: KnownCell => if (c.value == v) this else new ImpossiblePuzzle(this.cells)
+      case c: ImpossibleCell => this
+      case _ =>
 
-    // Setting the same cell again does nothing
-    if (this.cells(loc).value == v) return this
+        // Setting the same cell again does nothing
+        if (this.cells(loc).value == v) return this
 
-    val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
-    Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(
-      (pAcc, l) => pAcc match {
-        case p @ ( _:ImpossiblePuzzle | _:SolvedPuzzle) => p
-        case _ => pAcc.cells(l) match {
-          case c :KnownCell => if (c.value == v) new ImpossiblePuzzle(pAcc.cells) else pAcc
-          case c: ImpossibleCell => new ImpossiblePuzzle(setCellPuzzle.cells)
-          case ce: EmptyCell => pAcc.removePossibleValFromCell(l, v)
-          case cwv: CellWithVals => pAcc.removePossibleValFromCell(l, v).cells(l) match {
-            case c: KnownCell => pAcc.setCell(l, c.value)
-            case c: ImpossibleCell => new ImpossiblePuzzle(pAcc.cells)
-            case _ => pAcc.removePossibleValFromCell(l, v)
+        val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
+        Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(
+          (pAcc, l) => pAcc match {
+            case p@(_: ImpossiblePuzzle | _: SolvedPuzzle) => p
+            case _ => pAcc.cells(l) match {
+              case c: KnownCell => if (c.value == v) new ImpossiblePuzzle(pAcc.cells) else pAcc
+              case c: ImpossibleCell => new ImpossiblePuzzle(setCellPuzzle.cells)
+              case ce: EmptyCell => pAcc.removePossibleValFromCell(l, v)
+              case cwv: CellWithVals => pAcc.removePossibleValFromCell(l, v).cells(l) match {
+                case c: KnownCell => pAcc.setCell(l, c.value)
+                case c: ImpossibleCell => new ImpossiblePuzzle(pAcc.cells)
+                case _ => pAcc.removePossibleValFromCell(l, v)
+              }
+            }
           }
-        }
-      }
-    )
+        )
+    }
   }
   def removePossibleValFromCell(l: Loc, v: Value): Puzzle =
     Puzzle(cells + (l -> cells(l).removePossibleVal(v)))
