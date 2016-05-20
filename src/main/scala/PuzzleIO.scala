@@ -47,8 +47,10 @@ object FilePuzzleIO {
     } yield {
       Map(Loc(i,j) -> parsed(i-1)(j-1))
     }
-    val cells = c.reduce(_ ++ _)
-    Puzzle(cells)
+    c
+      .filter((cell) => cell.values.head.isKnown)
+      .foldLeft(Puzzle())(
+      (p, cellMap) => p.setCell(cellMap.keys.head, cellMap.values.head.value))
   }
   def write = ???
 
@@ -61,26 +63,26 @@ object WebPuzzleIO extends FlatSpec{
   implicit val webDriver: WebDriver = new HtmlUnitDriver
 //  System.setProperty("webdriver.chrome.driver", "C:\\Users\\casafta\\Downloads\\chromedriver_win32\\chromedriver.exe")
 //  val webDriver = new ChromeDriver
-  webDriver.get("http://view.websudoku.com/?level=1")
+  webDriver.get("http://view.websudoku.com/?level=4")
 
   def read: Puzzle = {
     val cellMaps = for {
       i <- 0 to 8
       j <- 0 to 8
+      inputElement = webDriver.findElement(By.id(s"f$i$j"))
+      if !inputElement.getAttribute("value").isEmpty
     } yield {
-      val inputElement = webDriver.findElement(By.id(s"f$i$j"))
-      if (!inputElement.getAttribute("value").isEmpty)
-        Map(Loc(i+1, j+1) -> Cell(inputElement.getAttribute("value").toInt))
-      else Map(Loc(i+1, j+1) -> Cell())
+        Map(Loc(i+1, j+1) ->inputElement.getAttribute("value").toInt)
     }
-    val cells = cellMaps.reduce(_ ++ _)
-    Puzzle(cells)
+    cellMaps
+      .foldLeft(Puzzle())(
+      (p, cellMap) => p.setCell(cellMap.keys.head, cellMap.values.head))
   }
 
   def writeAndTest(p: Puzzle): Boolean = {
     for {
-      i <- 0 to 8
       j <- 0 to 8
+      i <- 0 to 8
     } {
       val inputElement = webDriver.findElement(By.id(s"f$i$j"))
       if (inputElement.getAttribute("value").isEmpty) {
@@ -92,14 +94,13 @@ object WebPuzzleIO extends FlatSpec{
 
     val msg = webDriver.findElements(By.tagName("b")).get(19).getText
     println(msg)
-    if (msg.matches("""Congratulations!.*"""))
+    if (msg.startsWith("""Congratulations"""))
       true
     else
       false
   }
 
   def main(args: Array[String]) {
-//    (1 to 10).foreach {_ =>
     while(true){
       val p = WebPuzzleIO.read
       val solved = Puzzle.solve(p)
@@ -108,6 +109,5 @@ object WebPuzzleIO extends FlatSpec{
       else println("can't solve")
       WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
     }
-
   }
 }

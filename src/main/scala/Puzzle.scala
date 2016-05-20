@@ -19,9 +19,6 @@ abstract class Puzzle {
       case c: ImpossibleCell => this
       case _ =>
 
-        // Setting the same cell again does nothing
-        if (this.cells(loc).value == v) return this
-
         val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
         Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(
           (pAcc, l) => pAcc match {
@@ -92,10 +89,10 @@ case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{
   override def removePossibleValFromCell(l: Loc, v: Value): Puzzle = this
   override def setCell(l: Loc, v: Value): Puzzle = this
   override def toString = {
+//    val header_footer = "+-----------------------+\n"
     val str = for {
       i <- 1 to 9
       j <- 1 to 9
-
     } yield {
       val str =  "[" + cells(Loc(i, j)) + "]"
       if (j == 9) str + "\n" else str
@@ -276,15 +273,15 @@ object Test{
     println(solved)
     solved.foreach(p => assert(p.isSolved))
     println("End: " + Calendar.getInstance().getTime)
-//
-//    val pHardest = FilePuzzleIO.read("hardest.puzzle")
-//    println("hardest puzzle start: " + Calendar.getInstance().getTime)
-//    Puzzle.solve(pHardest).foreach(
-//      p => {
-//        println(p)
-//        assert(p.isSolved)
-//      }
-//    )
-//    println("hardest puzzle end: " + Calendar.getInstance().getTime)
+
+    val pHardest = FilePuzzleIO.read("hardest.puzzle")
+    println("hardest puzzle start: " + Calendar.getInstance().getTime)
+    Puzzle.solve(pHardest).foreach(
+      p => {
+        println(p)
+        assert(p.isSolved)
+      }
+    )
+    println("hardest puzzle end: " + Calendar.getInstance().getTime)
   }
 }

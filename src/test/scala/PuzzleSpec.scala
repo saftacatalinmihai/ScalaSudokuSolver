@@ -110,6 +110,5 @@ class PuzzleSpec extends FlatSpec with Matchers{
     ).map( p.setCell(_, 4))
       .foreach( pn => pn should be (ImpossiblePuzzle(pn.cells)))
 
-
   }
 }
