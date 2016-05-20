@@ -1,3 +1,4 @@
+
 import org.scalatest.{Matchers, FlatSpec}
 
 /**
@@ -122,4 +123,5 @@ class PuzzleSpec extends FlatSpec with Matchers{
       .foreach( pn => pn should be (ImpossiblePuzzle(pn.cells)))
 
   }
+
 }

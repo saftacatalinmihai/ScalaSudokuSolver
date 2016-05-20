@@ -83,17 +83,43 @@ case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{
   override def removePossibleValFromCell(l: Loc, v: Value): Puzzle = this
   override def setCell(l: Loc, v: Value): Puzzle = this
   override def toString = {
-//    val header_footer = "+-----------------------+\n"
-    val str = for {
+    val header_footer = "+-----------------------+\n"
+    val mid_section=    "|-------+-------+-------|\n"
+    val str =
+      for {
       i <- 1 to 9
       j <- 1 to 9
     } yield {
-      val str =  "[" + cells(Loc(i, j)) + "]"
-      if (j == 9) str + "\n" else str
+      val str =
+        {
+          if (j == 1 && (i == 4 || i == 7))
+            mid_section
+          else
+            ""
+        } +
+        {
+          if (j == 1 )
+            "|"
+          else
+            ""
+        } +
+        cells(Loc(i, j)) +
+        {
+          if (j == 3 || j == 6 )
+            " |"
+          else if ( j == 9)
+            " |\n"
+          else
+            ""
+        }
+      str
     }
-    str.foldLeft("")(
-      (s1, s2) => s1 + "" + s2
-    )
+    "\n" +
+    header_footer +
+      str.foldLeft("")(
+          (s1, s2) => s1 + "" + s2
+      ) +
+    header_footer
   }
 }
 

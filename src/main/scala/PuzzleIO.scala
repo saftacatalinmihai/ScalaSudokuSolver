@@ -85,11 +85,10 @@ object WebPuzzleIO extends FlatSpec{
     for {
       j <- 0 to 8
       i <- 0 to 8
+      inputElement = webDriver.findElement(By.id(s"f$i$j"))
+      if inputElement.getAttribute("value").isEmpty
     } {
-      val inputElement = webDriver.findElement(By.id(s"f$i$j"))
-      if (inputElement.getAttribute("value").isEmpty) {
-        inputElement.sendKeys(p.cells(Loc(i + 1, j + 1)).value.toString)
-      }
+      inputElement.sendKeys(p.cells(Loc(i + 1, j + 1)).value.toString)
     }
     val howAmIDoing = webDriver.findElement(By.name("submit"))
     howAmIDoing.click()
