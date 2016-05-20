@@ -83,8 +83,8 @@ case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{
   override def removePossibleValFromCell(l: Loc, v: Value): Puzzle = this
   override def setCell(l: Loc, v: Value): Puzzle = this
   override def toString = {
-    val header_footer = "+-----------------------+\n"
-    val mid_section=    "|-------+-------+-------|\n"
+    val headerAndFooter = "+-----------------------+\n"
+    val midSection =  "|-------+-------+-------|\n"
     val str =
       for {
       i <- 1 to 9
@@ -93,7 +93,7 @@ case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{
       val str =
         {
           if (j == 1 && (i == 4 || i == 7))
-            mid_section
+            midSection
           else
             ""
         } +
@@ -115,11 +115,11 @@ case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{
       str
     }
     "\n" +
-    header_footer +
+    headerAndFooter +
       str.foldLeft("")(
           (s1, s2) => s1 + "" + s2
       ) +
-    header_footer
+    headerAndFooter
   }
 }
 
@@ -163,8 +163,12 @@ object Puzzle {
     }
 
   // TODO: tail recursive with acc
+  var flatMappingAlgorithm: (List[Puzzle], List[Puzzle]) => List[Puzzle] =
+    (solved, possiblePuzzle) => {
+      possiblePuzzle.flatMap(Puzzle.solve(_, solved))
+    }
   def solve(p: Puzzle, solved: List[Puzzle] = List()): List[Puzzle] = {
-//    println(p)
+
     p match {
       case p: SolvedPuzzle => p :: solved
       case p: ImpossiblePuzzle => solved
@@ -173,11 +177,15 @@ object Puzzle {
         val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(p).head
         val loc = locCellWithLeastPossibleOptions.keys.head
         val cell = locCellWithLeastPossibleOptions.values.head
-        cell.possibleVals.map(
-          possibleValue => {
-            p.setCell(loc, possibleValue)
-          }
-        ).flatMap(Puzzle.solve(_))
+        flatMappingAlgorithm(
+          solved,
+          cell.possibleVals.map(
+            possibleValue => {
+              p.setCell(loc, possibleValue)
+            }
+          )
+        )
+//        ).flatMap(Puzzle.solve(_, solved))
       }
   }
 
@@ -185,12 +193,12 @@ object Puzzle {
     p.cells
       .filter( k => !p.cells(k._1).isKnown)
       .keys.map(
-      loc => HashMap(loc -> p.cells(loc))
-    )
-    .toList
-    .sortBy(
-      m => m.values.head.possibleVals.length
-    )
+        loc => HashMap(loc -> p.cells(loc))
+        )
+      .toList
+      .sortBy(
+        m => m.values.head.possibleVals.length
+        )
 
   var depLocCache: Map[Loc, List[Loc]] = Map()
   def dependentLocs(l: Loc): List[Loc] = {
@@ -240,42 +248,6 @@ object Puzzle {
 object Test{
   def main(args: Array[String]) {
 
-    val pTest = Puzzle()
-      .setCell(Loc(1,2), 6)
-      .setCell(Loc(1,4), 8)
-      .setCell(Loc(1,6), 7)
-      .setCell(Loc(2,1), 1)
-      .setCell(Loc(2,2), 5)
-      .setCell(Loc(2,4), 2)
-      .setCell(Loc(2,6), 6)
-      .setCell(Loc(2,7), 9)
-      .setCell(Loc(2,8), 8)
-      .setCell(Loc(3,1), 2)
-      .setCell(Loc(3,2), 4)
-      .setCell(Loc(3,3), 8)
-      .setCell(Loc(3,3), 8)
-      .setCell(Loc(4,3), 9)
-      .setCell(Loc(4,4), 6)
-      .setCell(Loc(4,5), 8)
-      .setCell(Loc(4,6), 4)
-      .setCell(Loc(6,4), 5)
-      .setCell(Loc(6,5), 3)
-      .setCell(Loc(6,6), 2)
-      .setCell(Loc(6,7), 1)
-      .setCell(Loc(7,7), 4)
-      .setCell(Loc(7,8), 9)
-      .setCell(Loc(7,9), 2)
-      .setCell(Loc(8,2), 9)
-      .setCell(Loc(8,3), 6)
-      .setCell(Loc(8,4), 7)
-      .setCell(Loc(8,6), 3)
-      .setCell(Loc(8,8), 5)
-      .setCell(Loc(8,9), 1)
-      .setCell(Loc(9,4), 4)
-      .setCell(Loc(9,6), 9)
-      .setCell(Loc(9,8), 6)
-
-    assert(pTest.isSolved)
     assert(Cell().value == ValueNotKnown())
     assert(Cell(1).value == KnownValue(1))
     assert(Cell(4).value == KnownValue(4))
@@ -283,25 +255,5 @@ object Test{
     assert(Cell(1,2).value == ValueNotKnown())
     assert(Loc(2,1) == Loc(2, 1))
 
-    println("Start: " + Calendar.getInstance().getTime)
-
-    val pTest2 = FilePuzzleIO.read("test.puzzle")
-    println(pTest2)
-    assert(!pTest2.isSolved)
-
-    val solved = Puzzle.solve(pTest2)
-    println(solved)
-    solved.foreach(p => assert(p.isSolved))
-    println("End: " + Calendar.getInstance().getTime)
-
-    val pHardest = FilePuzzleIO.read("hardest.puzzle")
-    println("hardest puzzle start: " + Calendar.getInstance().getTime)
-    Puzzle.solve(pHardest).foreach(
-      p => {
-        println(p)
-        assert(p.isSolved)
-      }
-    )
-    println("hardest puzzle end: " + Calendar.getInstance().getTime)
   }
 }
