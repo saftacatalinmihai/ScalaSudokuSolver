@@ -72,6 +72,17 @@ class PuzzleSpec extends FlatSpec with Matchers{
     p should be (UnsolvedPuzzle(p.cells))
   }
 
+  "Reading a puzzle from file" should
+    "correctly set dependent cells by removing know values from the possible values of dependent cells" in {
+    val p = FilePuzzleIO.read("test.puzzle")
+
+    p.cells(Loc(1,2)) should be (CellWithVals(List(1, 3, 5, 6)))
+
+    p.cells(Loc(5,4)) should be (CellWithVals(List(3, 5, 6, 9)))
+
+    p.cells(Loc(7,9)) should be (CellWithVals(List(4,7)))
+  }
+
   it should "be impossible to set the value of a dependent cell to that of the cell" in {
     val p = FilePuzzleIO.read("test.puzzle")
     List(

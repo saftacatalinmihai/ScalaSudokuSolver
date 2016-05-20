@@ -73,12 +73,6 @@ case class UnsolvedPuzzle(cells: Map[Loc, Cell]) extends Puzzle{
 
   def isSolved = false
   def isImpossible = false
-//  override def removePossibleValFromCell(l: Loc, v: Value): Puzzle = {
-//    Puzzle(cells + (l -> cells(l).removePossibleVal(v)))
-//  }
-//  override def setCell(l: Loc, v: Value): Puzzle =
-//    Puzzle(cells + (l -> Cell(v)))
-
 }
 
 case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{

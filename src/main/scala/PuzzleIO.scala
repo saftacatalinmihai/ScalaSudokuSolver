@@ -1,7 +1,7 @@
+import java.util.Calendar
+
 import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
-import org.openqa.selenium.ie.InternetExplorerDriver
 import org.openqa.selenium.{WebElement, By, WebDriver}
 import org.scalatest.selenium.{Firefox, WebBrowser}
 import org.scalatest.{FlatSpec}
@@ -41,16 +41,18 @@ object FilePuzzleIO {
       )
       .toList
 
-    val c = for {
+    val cellsToSet = for {
       i <- 1 to 9
       j <- 1 to 9
+      parsedCell = parsed(i-1)(j-1)
+      if parsedCell.isKnown
     } yield {
-      Map(Loc(i,j) -> parsed(i-1)(j-1))
+      Map(Loc(i,j) -> parsedCell.value)
     }
-    c
-      .filter((cell) => cell.values.head.isKnown)
+    cellsToSet
       .foldLeft(Puzzle())(
-      (p, cellMap) => p.setCell(cellMap.keys.head, cellMap.values.head.value))
+        (p, cellMap) => p.setCell(cellMap.keys.head, cellMap.values.head)
+      )
   }
   def write = ???
 
@@ -103,9 +105,12 @@ object WebPuzzleIO extends FlatSpec{
   def main(args: Array[String]) {
     while(true){
       val p = WebPuzzleIO.read
+      println("Start: " + Calendar.getInstance().getTime)
       val solved = Puzzle.solve(p)
-      if (solved.nonEmpty)
+      if (solved.nonEmpty) {
         assert(WebPuzzleIO.writeAndTest(solved.head))
+        println("Done: " + Calendar.getInstance().getTime)
+      }
       else println("can't solve")
       WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
     }
