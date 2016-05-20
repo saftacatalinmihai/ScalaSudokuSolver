@@ -65,7 +65,7 @@ object WebPuzzleIO extends FlatSpec{
   implicit val webDriver: WebDriver = new HtmlUnitDriver
 //  System.setProperty("webdriver.chrome.driver", "C:\\Users\\casafta\\Downloads\\chromedriver_win32\\chromedriver.exe")
 //  val webDriver = new ChromeDriver
-  webDriver.get("http://view.websudoku.com/?level=4")
+  webDriver.get("http://view.websudoku.com/?level=1")
 
   def read: Puzzle = {
     val cellMaps = for {

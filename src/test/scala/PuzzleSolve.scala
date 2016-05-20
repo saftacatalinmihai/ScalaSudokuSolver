@@ -67,9 +67,9 @@ class PuzzleSolve extends FlatSpec with Matchers{
   }
 
   "Puzzles got from websudoku.com" should "be solved" in {
-//    Puzzle.flatMappingAlgorithm = (solved, possiblePuzzle) =>  {
-//      possiblePuzzle.par.flatMap(Puzzle.solve(_, solved)).toList
-//    }
+    Puzzle.flatMappingAlgorithm = (solved, possiblePuzzle) =>  {
+      possiblePuzzle.par.flatMap(Puzzle.solve(_, solved)).toList
+    }
     for ( i <- 1 to 10) {
       time {
         val solved = Puzzle.solve(WebPuzzleIO.read)
