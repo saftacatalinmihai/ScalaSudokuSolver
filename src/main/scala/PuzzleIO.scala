@@ -102,14 +102,20 @@ object WebPuzzleIO extends FlatSpec{
   }
 
   def main(args: Array[String]) {
-    while(true){
+    def testForever(): Unit = {
       val p = WebPuzzleIO.read
-      println("Start: " + Calendar.getInstance().getTime)
-      val solved = Puzzle.solve2(p)
-      assert(WebPuzzleIO.writeAndTest(solved))
-      println("Done: " + Calendar.getInstance().getTime)
-
-      WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
+      val t0 = System.nanoTime()
+      val solved = Puzzle.solve4(p).take(1).subscribe( solved => {
+        assert(WebPuzzleIO.writeAndTest(solved))
+        val t1 = System.nanoTime()
+        println("Elapsed time: " + (t1 - t0) + " ns")
+        WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
+        testForever()
+      })
     }
+
+    testForever()
+
+    scala.io.StdIn.readLine()
   }
 }

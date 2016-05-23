@@ -288,12 +288,7 @@ object Puzzle {
           .from(cell.possibleVals)
           .map(unsolvedPuzzle.setCell(loc, _))
           .subscribeOn( ComputationScheduler() )
-//          .flatMap(Puzzle.solve4)
-          .flatMap( p => p match {
-                  case SolvedPuzzle(cells) => Observable.just(p)
-                  case _ => Puzzle.solve4(p)
-                }
-              )
+          .flatMap(Puzzle.solve4)
     }
   }
 
@@ -356,7 +351,8 @@ object Puzzle {
 object Test{
   def main(args: Array[String]) {
 //    val p = Puzzle()
-    val p = FilePuzzleIO.read("hardest.puzzle")
+//    val p = FilePuzzleIO.read("hardest.puzzle")
+    val p = FilePuzzleIO.read("test.puzzle")
 
     val t0 = System.nanoTime()
     println("Start")
