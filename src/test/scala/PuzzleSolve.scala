@@ -81,15 +81,16 @@ class PuzzleSolve extends FlatSpec with Matchers{
 
   "The hardest sudoku puzzle" should "be solved" in {
     val pHardest = FilePuzzleIO.read("hardest.puzzle")
-    1 to 10 foreach {
+
+    //    time {
+    //      val solved = Puzzle.solve2(pHardest)
+    //      solved should be (SolvedPuzzle(solved.cells))
+    //    }
+    1 to 2 foreach {
       _ => {
         time {
-          Puzzle.solve(pHardest).foreach(
-            p => {
-              println(p)
-              assert(p.isSolved)
-            }
-          )
+          val solved = Puzzle.solve2(pHardest)
+          solved should be(SolvedPuzzle(solved.cells))
         }
       }
     }

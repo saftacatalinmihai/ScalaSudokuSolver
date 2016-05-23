@@ -1,7 +1,15 @@
 
-import java.util.Calendar
+import rx.lang.scala.schedulers.ComputationScheduler
+import rx.schedulers.Schedulers
 
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
+import rx.lang.scala.{Subscription, Subscriber, Observable}
+import scala.async.Async.{async, await}
+import scala.concurrent._
 import scala.collection.immutable.HashMap
+import scala.util.{Failure, Success}
+
 /**
   * Created by casafta on 16/5/2016.
   */
@@ -167,26 +175,126 @@ object Puzzle {
     (solved, possiblePuzzle) => {
       possiblePuzzle.flatMap(Puzzle.solve(_, solved))
     }
+
   def solve(p: Puzzle, solved: List[Puzzle] = List()): List[Puzzle] = {
 
     p match {
-      case p: SolvedPuzzle => p :: solved
+      case p: SolvedPuzzle =>
+//        println(p)
+        p :: solved
       case p: ImpossiblePuzzle => solved
       case p: UnsolvedPuzzle =>
 
         val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(p).head
         val loc = locCellWithLeastPossibleOptions.keys.head
         val cell = locCellWithLeastPossibleOptions.values.head
-        flatMappingAlgorithm(
-          solved,
-          cell.possibleVals.map(
+        val possiblePuzzles = cell.possibleVals.map(
             possibleValue => {
               p.setCell(loc, possibleValue)
             }
           )
-        )
+
+        if (possiblePuzzles.exists(_.isSolved)) {
+//          println(possiblePuzzles)
+          possiblePuzzles.filter(_.isSolved)
+        }
+        else {
+          for {
+            p <- possiblePuzzles
+            candidate <- Puzzle.solve(p)
+            if candidate.isSolved
+          } List(candidate)
+        }
+        List()
+
+      //        flatMappingAlgorithm(
+//          solved,
+//          cell.possibleVals.map(
+//            possibleValue => {
+//              p.setCell(loc, possibleValue)
+//            }
+//          )
+//        )
 //        ).flatMap(Puzzle.solve(_, solved))
       }
+  }
+
+  def solve2(p: Puzzle): Puzzle = {
+    p match {
+      case p: SolvedPuzzle => p
+      case p: ImpossiblePuzzle => p
+      case pu: UnsolvedPuzzle =>
+
+        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(pu).head
+        val loc = locCellWithLeastPossibleOptions.keys.head
+        val cell = locCellWithLeastPossibleOptions.values.head
+
+        for {
+          v <- cell.possibleVals
+          candidate = pu.setCell(loc, v)
+        } {
+          if (candidate.isSolved ) return candidate
+          else {
+            val solvedCandidate = Puzzle.solve2(candidate)
+            if (solvedCandidate.isSolved) return solvedCandidate
+          }
+        }
+
+        Puzzle()
+    }
+  }
+
+  def solve3(p: Puzzle,
+             onFound: (Puzzle) => Unit
+            ): Unit = {
+    p match {
+      case p: SolvedPuzzle => onFound(p)
+      case p: ImpossiblePuzzle =>
+      case pu: UnsolvedPuzzle =>
+
+        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(pu).head
+        val loc = locCellWithLeastPossibleOptions.keys.head
+        val cell = locCellWithLeastPossibleOptions.values.head
+
+        for {
+          v <- cell.possibleVals
+          candidate = pu.setCell(loc, v)
+        } {
+          if (candidate.isSolved ) onFound(candidate)
+          else {
+            Future {
+              Puzzle.solve3(
+                candidate,
+//                onFound
+                (solvedCandidate) => if (solvedCandidate.isSolved) onFound(solvedCandidate)
+              )
+            }
+          }
+        }
+    }
+  }
+
+  def solve4(p: Puzzle): Observable[Puzzle] = {
+    p match {
+      case p: SolvedPuzzle => Observable.just(p)
+      case p: ImpossiblePuzzle => Observable.empty
+      case unsolvedPuzzle: UnsolvedPuzzle =>
+
+        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(unsolvedPuzzle).head
+        val loc = locCellWithLeastPossibleOptions.keys.head
+        val cell = locCellWithLeastPossibleOptions.values.head
+
+        Observable
+          .from(cell.possibleVals)
+          .map(unsolvedPuzzle.setCell(loc, _))
+          .subscribeOn( ComputationScheduler() )
+//          .flatMap(Puzzle.solve4)
+          .flatMap( p => p match {
+                  case SolvedPuzzle(cells) => Observable.just(p)
+                  case _ => Puzzle.solve4(p)
+                }
+              )
+    }
   }
 
   def cellsByLeastPossibleVals(p: Puzzle): CellList =
@@ -247,13 +355,44 @@ object Puzzle {
 
 object Test{
   def main(args: Array[String]) {
+//    val p = Puzzle()
+    val p = FilePuzzleIO.read("hardest.puzzle")
 
-    assert(Cell().value == ValueNotKnown())
-    assert(Cell(1).value == KnownValue(1))
-    assert(Cell(4).value == KnownValue(4))
-    assert(Cell(5).value == KnownValue(5))
-    assert(Cell(1,2).value == ValueNotKnown())
-    assert(Loc(2,1) == Loc(2, 1))
+    val t0 = System.nanoTime()
+    println("Start")
+    Puzzle.solve4(p).take(1).subscribe((p) => {
+        println(p)
+        val t1 = System.nanoTime()
+        println("Elapsed time: " + (t1 - t0) + " ns")
+      }
+    )
 
+    scala.io.StdIn.readLine()
+
+//    val o = Observable[Int]( s  => {
+//      s.onNext(1)
+//      s.onCompleted()
+//    })
+//
+//    val o2 = Observable[Int]( s  => {
+//      s.onNext(2)
+//      s.onCompleted()
+//    })
+//
+//    val o3 = o ++ o2
+//    println("11")
+//
+//    val future = async {
+//      val f1 = async { Thread.sleep(1000); true}
+//      val f2 = async { Thread.sleep(2000); 42}
+//      if (await(f1)) await(f2) else 0
+//    }
+//    future.onComplete {
+//      case r: Success() => println(r)
+//      case f: Failure => println(f)
+//    }
+//
+//    o3.subscribe(println(_))
+//    println("22")
   }
 }

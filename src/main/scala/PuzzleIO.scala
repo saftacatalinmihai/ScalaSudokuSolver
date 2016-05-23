@@ -105,12 +105,10 @@ object WebPuzzleIO extends FlatSpec{
     while(true){
       val p = WebPuzzleIO.read
       println("Start: " + Calendar.getInstance().getTime)
-      val solved = Puzzle.solve(p)
-      if (solved.nonEmpty) {
-        assert(WebPuzzleIO.writeAndTest(solved.head))
-        println("Done: " + Calendar.getInstance().getTime)
-      }
-      else println("can't solve")
+      val solved = Puzzle.solve2(p)
+      assert(WebPuzzleIO.writeAndTest(solved))
+      println("Done: " + Calendar.getInstance().getTime)
+
       WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
     }
   }
