@@ -285,9 +285,10 @@ object Puzzle {
         val cell = locCellWithLeastPossibleOptions.values.head
 
         Observable
-          .from(cell.possibleVals)
-          .map(unsolvedPuzzle.setCell(loc, _))
-          .subscribeOn( ComputationScheduler() )
+          .from(
+            cell.possibleVals.map(
+              pv => unsolvedPuzzle.setCell(loc, pv)))
+//          .subscribeOn( ComputationScheduler() )
           .flatMap(Puzzle.solve4)
     }
   }
