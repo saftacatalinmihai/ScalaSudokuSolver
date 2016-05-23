@@ -280,15 +280,15 @@ object Puzzle {
       case p: ImpossiblePuzzle => Observable.empty
       case unsolvedPuzzle: UnsolvedPuzzle =>
 
-        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(unsolvedPuzzle).head
-        val loc = locCellWithLeastPossibleOptions.keys.head
-        val cell = locCellWithLeastPossibleOptions.values.head
-
         Observable
-          .from(
-            cell.possibleVals.map(
-              pv => unsolvedPuzzle.setCell(loc, pv)))
-//          .subscribeOn( ComputationScheduler() )
+          .from(Puzzle.cellsByLeastPossibleVals(unsolvedPuzzle).head )
+          .flatMap( lc => {
+            val (loc, cell) = (lc._1, lc._2)
+            Observable.from(cell.possibleVals.map(
+              pv => unsolvedPuzzle.setCell(loc, pv)
+            ))
+          })
+          .subscribeOn( ComputationScheduler() )
           .flatMap(Puzzle.solve4)
     }
   }
@@ -352,15 +352,15 @@ object Puzzle {
 object Test{
   def main(args: Array[String]) {
 //    val p = Puzzle()
-//    val p = FilePuzzleIO.read("hardest.puzzle")
-    val p = FilePuzzleIO.read("test.puzzle")
+    val p = FilePuzzleIO.read("hardest.puzzle")
+//    val p = FilePuzzleIO.read("test.puzzle")
 
     val t0 = System.nanoTime()
     println("Start")
     Puzzle.solve4(p).take(1).subscribe((p) => {
         println(p)
         val t1 = System.nanoTime()
-        println("Elapsed time: " + (t1 - t0) + " ns")
+        println("Elapsed time: " + (t1 - t0) / 1000000000 + " s")
       }
     )
 
