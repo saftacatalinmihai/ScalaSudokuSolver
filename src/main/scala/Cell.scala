@@ -1,4 +1,4 @@
-import scala.language.implicitConversions
+import scala.language.{postfixOps, implicitConversions}
 
 /**
   * Created by casafta on 16/5/2016.
@@ -25,7 +25,7 @@ case class KnownCell(v: Value) extends Cell {
 
 case class EmptyCell() extends Cell {
   override def isKnown = false
-  def removePossibleVal(v: Value): Cell = Cell((1 to 9 toList).map(Value(_)).filter(_ != v))
+  def removePossibleVal(v: Value): Cell = Cell((1 to 9).filter(Value(_) != v).toList.map(Value(_)))
   override def possibleVals: List[Value] = ( 1 to 9 toList).map(Value(_))
 
   override val isImpossible: Boolean = false

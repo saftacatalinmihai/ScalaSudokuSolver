@@ -22,11 +22,10 @@ abstract class Puzzle {
   def setCell(loc: Loc, v: Value): Puzzle = {
 //    println(this)
 //    println(s"Setting $loc to $v")
-    this.cells(loc) match {
+    cells(loc) match {
       case c: KnownCell => if (c.value == v) this else new ImpossiblePuzzle(this.cells)
       case c: ImpossibleCell => this
       case _ =>
-
         val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
         Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(
           (pAcc, l) => pAcc match {
@@ -45,6 +44,25 @@ abstract class Puzzle {
         )
     }
   }
+//        def set(loc: Loc, v: Value, cellMap: Map[Loc, Cell], possible: Boolean = true): Map[Loc, Cell] = {
+//          val setCells = cellMap + (loc -> Cell(v))
+//          Puzzle.dependentLocs(loc).foldLeft(setCells)(
+//            (m, l) => {
+//              if ( m(l).isKnown ) m
+//              else {
+//                val depCell = m(l).removePossibleVal(v)
+//                depCell match {
+//                  case c: KnownCell => set(l, c.value, m)
+//                  case _ => m + (l -> depCell)
+//                }
+//              }
+//            }
+//          )
+//        }
+//        val newCells = set(loc, v, cells)
+//        Puzzle(newCells)
+//    }
+//  }
   def removePossibleValFromCell(l: Loc, v: Value): Puzzle =
     Puzzle(cells + (l -> cells(l).removePossibleVal(v)))
 
@@ -355,9 +373,18 @@ object Test{
     val p = FilePuzzleIO.read("hardest.puzzle")
 //    val p = FilePuzzleIO.read("test.puzzle")
 
-    val t0 = System.nanoTime()
     println("Start")
-    Puzzle.solve4(p).take(1).subscribe((p) => {
+//    val vList = List(1,9).map(Value(_))
+//    val c = Cell(vList)
+    val t0 = System.nanoTime()
+//    c.removePossibleVal(1)
+//    c.removePossibleVal(8)
+//    p.setCell(Loc(1,2),1)
+//    val solved = Puzzle.solve(p)
+//    val t1 = System.nanoTime()
+//    println("Elapsed time: " + (t1 - t0) + " ns")
+//    println(solved)
+      Puzzle.solve4(p).take(1).subscribe((p) => {
         println(p)
         val t1 = System.nanoTime()
         println("Elapsed time: " + (t1 - t0) / 1000000000 + " s")
