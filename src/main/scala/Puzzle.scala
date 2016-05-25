@@ -44,25 +44,6 @@ abstract class Puzzle {
         )
     }
   }
-//        def set(loc: Loc, v: Value, cellMap: Map[Loc, Cell], possible: Boolean = true): Map[Loc, Cell] = {
-//          val setCells = cellMap + (loc -> Cell(v))
-//          Puzzle.dependentLocs(loc).foldLeft(setCells)(
-//            (m, l) => {
-//              if ( m(l).isKnown ) m
-//              else {
-//                val depCell = m(l).removePossibleVal(v)
-//                depCell match {
-//                  case c: KnownCell => set(l, c.value, m)
-//                  case _ => m + (l -> depCell)
-//                }
-//              }
-//            }
-//          )
-//        }
-//        val newCells = set(loc, v, cells)
-//        Puzzle(newCells)
-//    }
-//  }
   def removePossibleValFromCell(l: Loc, v: Value): Puzzle =
     Puzzle(cells + (l -> cells(l).removePossibleVal(v)))
 
@@ -159,6 +140,22 @@ case class ImpossiblePuzzle(val cells: Map[Loc, Cell]) extends Puzzle{
 case class Pair(l: Loc, c: Cell)
 
 object Puzzle {
+  def merge( m1: Map[Loc, Cell], m2: Map[Loc, Cell]): Map[Loc, Cell] = {
+    m1.foldLeft(m2)(
+      (mergedMapping, newMapping) => {
+        newMapping match {
+          case (loc, cell) =>
+            if (mergedMapping.contains(loc)) {
+              val currentCellPossibleVals = mergedMapping(loc).possibleVals.toSet
+              val newCellPossibleVals = cell.possibleVals.toSet
+              val merged = currentCellPossibleVals.intersect(newCellPossibleVals)
+              mergedMapping + (loc -> Cell(merged.toList))
+            }
+            else mergedMapping + (loc -> cell)
+        }
+      }
+    )
+  }
 
   def which(p: Puzzle): String =
     p match {
@@ -319,7 +316,7 @@ object Puzzle {
         )
       .toList
       .sortBy(
-        m => m.values.head.possibleVals.length
+        m => m.values.head.possibleVals.size
         )
 
   var depLocCache: Map[Loc, List[Loc]] = Map()

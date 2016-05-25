@@ -8,9 +8,9 @@ class PuzzleSpec extends FlatSpec with Matchers{
 
   "An empty Puzzle" should "be created" in {
     val p = Puzzle()
-    p.cells.values.forall(_.possibleVals.length == 9) should be (true)
+    p.cells.values.forall(_.possibleVals.size == 9) should be (true)
     p.cells.values.foreach(
-      _.possibleVals should have length 9
+      _.possibleVals should have size 9
     )
     p should be (UnsolvedPuzzle(p.cells))
   }
@@ -22,7 +22,7 @@ class PuzzleSpec extends FlatSpec with Matchers{
     for (
       depCell <- Puzzle.dependentLocs(Loc(1,1)).map(pSet.cells(_))
     ) {
-      depCell should be (CellWithVals(List(2,3,4,5,6,7,8,9)))
+      depCell.possibleVals should be (List(2,3,4,5,6,7,8,9).map(Value(_)).toSet)
     }
   }
 
@@ -42,7 +42,7 @@ class PuzzleSpec extends FlatSpec with Matchers{
     p should be (samePuzzle)
   }
 
-  ignore should "be set as impossible if trying to set 2 dependent cells to the same value" in {
+  it should "be set as impossible if trying to set 2 dependent cells to the same value" in {
     val p = Puzzle()
 
     for {
@@ -77,11 +77,11 @@ class PuzzleSpec extends FlatSpec with Matchers{
     "correctly set dependent cells by removing know values from the possible values of dependent cells" in {
     val p = FilePuzzleIO.read("test.puzzle")
 
-    p.cells(Loc(1,2)) should be (CellWithVals(List(1, 3, 5, 6)))
+    p.cells(Loc(1,2)).possibleVals should be (List(1, 3, 5, 6).map(Value(_)).toSet)
 
-    p.cells(Loc(5,4)) should be (CellWithVals(List(3, 5, 6, 9)))
+    p.cells(Loc(5,4)).possibleVals should be (List(3, 5, 6, 9).map(Value(_)).toSet)
 
-    p.cells(Loc(7,9)) should be (CellWithVals(List(4,7)))
+    p.cells(Loc(7,9)).possibleVals should be (List(4,7).map(Value(_)).toSet)
   }
 
   it should "be impossible to set the value of a dependent cell to that of the cell" in {

@@ -7,7 +7,7 @@ import scala.language.{postfixOps, implicitConversions}
 abstract class Cell {
   def isKnown: Boolean
   val isImpossible: Boolean
-  def possibleVals: List[Value]
+  val possibleVals: Set[Value]
   def removePossibleVal(v: Value): Cell
   def set(v: Int): Cell = Cell(v)
   def value = if (this.isKnown) this.possibleVals.head else new ValueNotKnown()
@@ -18,23 +18,23 @@ abstract class Cell {
 case class KnownCell(v: Value) extends Cell {
   override def isKnown: Boolean = true
   def removePossibleVal(v: Value): Cell = if (this.v == v) ImpossibleCell() else this
-  override def possibleVals: List[Value] = List(v)
+  val possibleVals: Set[Value] = Set(v)
 
   override val isImpossible: Boolean = false
 }
 
 case class EmptyCell() extends Cell {
   override def isKnown = false
-  def removePossibleVal(v: Value): Cell = Cell((1 to 9).filter(Value(_) != v).toList.map(Value(_)))
-  override def possibleVals: List[Value] = ( 1 to 9 toList).map(Value(_))
+  def removePossibleVal(v: Value): Cell = Cell( possibleVals - v toList)  //Cell((1 to 9).filter(Value(_) != v).toList.map(Value(_)))
+  val possibleVals: Set[Value] = ( 1 to 9 ).map(Value(_)).toSet
 
   override val isImpossible: Boolean = false
 }
 
 case class CellWithVals(vals: List[Value]) extends Cell{
   override def isKnown = false
-  def removePossibleVal(v: Value): Cell = Cell(vals.filter(_ != v))
-  override def possibleVals: List[Value] = vals
+  def removePossibleVal(v: Value): Cell = Cell(possibleVals - v toList)
+  val possibleVals: Set[Value] = vals.toSet
 
   override val isImpossible: Boolean = false
 }
@@ -42,7 +42,7 @@ case class CellWithVals(vals: List[Value]) extends Cell{
 case class ImpossibleCell() extends Cell {
   override def isKnown = false
   def removePossibleVal(v: Value): Cell = new ImpossibleCell
-  override def possibleVals: List[Value] = List()
+  val possibleVals: Set[Value] = Set()
 
   override val isImpossible: Boolean = true
 }
