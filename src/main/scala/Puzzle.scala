@@ -1,15 +1,10 @@
 
+import rx.lang.scala.Observable
 import rx.lang.scala.schedulers.ComputationScheduler
-import rx.schedulers.Schedulers
 
-import scala.concurrent.ExecutionContext
-import ExecutionContext.Implicits.global
-import rx.lang.scala.{Subscription, Subscriber, Observable}
-import scala.async.Async.{async, await}
-import scala.concurrent._
 import scala.collection.immutable.HashMap
-import scala.util.{Failure, Success}
-
+import rx.lang.scala.Scheduler
+import scala.concurrent.duration.DurationInt
 /**
   * Created by casafta on 16/5/2016.
   */
@@ -19,63 +14,31 @@ abstract class Puzzle {
   def cells: Map[Loc, Cell]
   def isSolved: Boolean
   def isImpossible: Boolean
-//  def setCell(loc: Loc, v: Value): Puzzle = {
-////    println(this)
-////    println(s"Setting $loc to $v")
-//    cells(loc) match {
-//      case c: KnownCell => if (c.value == v) this else new ImpossiblePuzzle(this.cells)
-//      case c: ImpossibleCell => this
-//      case _ =>
-//        val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
-//        Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(
-//          (pAcc, l) => pAcc match {
-//            case p@(_: ImpossiblePuzzle | _: SolvedPuzzle) => p
-//            case _ => pAcc.cells(l) match {
-//              case c: KnownCell => if (c.value == v) new ImpossiblePuzzle(pAcc.cells) else pAcc
-//              case c: ImpossibleCell => new ImpossiblePuzzle(setCellPuzzle.cells)
-//              case ce: EmptyCell => pAcc.removePossibleValFromCell(l, v)
-//              case cwv: CellWithVals => pAcc.removePossibleValFromCell(l, v).cells(l) match {
-//                case c: KnownCell => pAcc.setCell(l, c.value)
-//                case c: ImpossibleCell => new ImpossiblePuzzle(pAcc.cells)
-//                case _ => pAcc.removePossibleValFromCell(l, v)
-//              }
-//            }
-//          }
-//        )
-//    }
-//  }
-  def setSingleCell( l: Loc, v: Value): Puzzle =
-    Puzzle(cells + (l -> Cell(v)))
+  def setCell(loc: Loc, v: Value): Puzzle =
+    cells(loc) match {
+      case c: KnownCell => if (c.value == v) this else new ImpossiblePuzzle(cells)
+      case c: ImpossibleCell => this
+      case _ =>
+        val setCellPuzzle: Puzzle = Puzzle(cells + (loc -> Cell(v)))
+        Puzzle.dependentLocs(loc).foldLeft(setCellPuzzle)(
+          (pAcc, l) => pAcc match {
+            case p@(_: ImpossiblePuzzle | _: SolvedPuzzle) => p
+            case _ => pAcc.cells(l) match {
+              case c: KnownCell => if (c.value == v) new ImpossiblePuzzle(pAcc.cells) else pAcc
+              case c: ImpossibleCell => new ImpossiblePuzzle(setCellPuzzle.cells)
+              case ce: EmptyCell => pAcc.removePossibleValFromCell(l, v)
+              case cwv: CellWithVals => pAcc.removePossibleValFromCell(l, v).cells(l) match {
+                case c: KnownCell => pAcc.setCell(l, c.value)
+                case c: ImpossibleCell => new ImpossiblePuzzle(pAcc.cells)
+                case _ => pAcc.removePossibleValFromCell(l, v)
+              }
+            }
+          }
+        )
+    }
 
   def removePossibleValFromCell(l: Loc, v: Value): Puzzle =
     Puzzle(cells + (l -> cells(l).removePossibleVal(v)))
-
-  def setDepCells(l: Loc, v: Value): (Puzzle, List[Pair]) =
-    Puzzle.dependentLocs(l)
-      .foldLeft((
-        this,
-        List[Pair]()
-        ))(
-        (acc, l) => {
-          val (p, toSet) = (acc._1, acc._2)
-          val cellBefore = p.cells(l)
-          val cellNew = p.removePossibleValFromCell(l, v).cells(l)
-          if (cellBefore.possibleVals.size == 2 ) {
-            if (cellNew.isKnown) ( p, Pair(l, cellNew) :: toSet )
-            else ( p.removePossibleValFromCell(l, v), Pair(l, cellNew) :: toSet )
-          }
-          else ( p.removePossibleValFromCell(l, v), toSet )
-        }
-      )
-
-  def setCell2(l: Loc, v: Value): (Puzzle, List[Pair]) = this.setSingleCell(l, v).setDepCells(l, v)
-
-  def setCell(l: Loc, v: Value): Puzzle = {
-    val (p, toSet) = this.setCell2(l, v)
-    toSet.foldLeft(p) {
-      (p, pair) => p.setCell(pair.l, pair.c.value)
-    }
-  }
 
   def knownCells = cells.filter( _._2.isKnown )
 
@@ -106,15 +69,11 @@ abstract class Puzzle {
 }
 
 case class UnsolvedPuzzle(cells: Map[Loc, Cell]) extends Puzzle{
-  require(Puzzle.isPossible(cells), "This puzzle is impossible" + this)
-
   def isSolved = false
   def isImpossible = false
 }
 
 case class SolvedPuzzle(val cells: Map[Loc, Cell] ) extends Puzzle{
-  require(Puzzle.isPossible(cells), "This puzzle is impossible" + this)
-
   override def isSolved: Boolean = true
   def isImpossible = false
   override def removePossibleValFromCell(l: Loc, v: Value): Puzzle = this
@@ -171,25 +130,6 @@ case class Pair(l: Loc, c: Cell)
 
 object Puzzle {
 
-
-
-  def merge( m1: Map[Loc, Cell], m2: Map[Loc, Cell]): Map[Loc, Cell] = {
-    m1.foldLeft(m2)(
-      (mergedMapping, newMapping) => {
-        newMapping match {
-          case (loc, cell) =>
-            if (mergedMapping.contains(loc)) {
-              val currentCellPossibleVals = mergedMapping(loc).possibleVals.toSet
-              val newCellPossibleVals = cell.possibleVals.toSet
-              val merged = currentCellPossibleVals.intersect(newCellPossibleVals)
-              mergedMapping + (loc -> Cell(merged.toList))
-            }
-            else mergedMapping + (loc -> cell)
-        }
-      }
-    )
-  }
-
   def which(p: Puzzle): String =
     p match {
       case ImpossiblePuzzle(_) => "Impossible"
@@ -218,111 +158,7 @@ object Puzzle {
       }
     }
 
-  // TODO: tail recursive with acc
-  var flatMappingAlgorithm: (List[Puzzle], List[Puzzle]) => List[Puzzle] =
-    (solved, possiblePuzzle) => {
-      possiblePuzzle.flatMap(Puzzle.solve(_, solved))
-    }
-
-  def solve(p: Puzzle, solved: List[Puzzle] = List()): List[Puzzle] = {
-
-    p match {
-      case p: SolvedPuzzle =>
-//        println(p)
-        p :: solved
-      case p: ImpossiblePuzzle => solved
-      case p: UnsolvedPuzzle =>
-
-        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(p).head
-        val loc = locCellWithLeastPossibleOptions.keys.head
-        val cell = locCellWithLeastPossibleOptions.values.head
-        val possiblePuzzles = cell.possibleVals.map(
-            possibleValue => {
-              p.setCell(loc, possibleValue)
-            }
-          )
-
-        if (possiblePuzzles.exists(_.isSolved)) {
-//          println(possiblePuzzles)
-          possiblePuzzles.filter(_.isSolved)
-        }
-        else {
-          for {
-            p <- possiblePuzzles
-            candidate <- Puzzle.solve(p)
-            if candidate.isSolved
-          } List(candidate)
-        }
-        List()
-
-      //        flatMappingAlgorithm(
-//          solved,
-//          cell.possibleVals.map(
-//            possibleValue => {
-//              p.setCell(loc, possibleValue)
-//            }
-//          )
-//        )
-//        ).flatMap(Puzzle.solve(_, solved))
-      }
-  }
-
-  def solve2(p: Puzzle): Puzzle = {
-    p match {
-      case p: SolvedPuzzle => p
-      case p: ImpossiblePuzzle => p
-      case pu: UnsolvedPuzzle =>
-
-        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(pu).head
-        val loc = locCellWithLeastPossibleOptions.keys.head
-        val cell = locCellWithLeastPossibleOptions.values.head
-
-        for {
-          v <- cell.possibleVals
-          candidate = pu.setCell(loc, v)
-        } {
-          if (candidate.isSolved ) return candidate
-          else {
-            val solvedCandidate = Puzzle.solve2(candidate)
-            if (solvedCandidate.isSolved) return solvedCandidate
-          }
-        }
-
-        Puzzle()
-    }
-  }
-
-  def solve3(p: Puzzle,
-             onFound: (Puzzle) => Unit
-            ): Unit = {
-    p match {
-      case p: SolvedPuzzle => onFound(p)
-      case p: ImpossiblePuzzle =>
-      case pu: UnsolvedPuzzle =>
-
-        val locCellWithLeastPossibleOptions = Puzzle.cellsByLeastPossibleVals(pu).head
-        val loc = locCellWithLeastPossibleOptions.keys.head
-        val cell = locCellWithLeastPossibleOptions.values.head
-
-        for {
-          v <- cell.possibleVals
-          candidate = pu.setCell(loc, v)
-        } {
-          if (candidate.isSolved ) onFound(candidate)
-          else {
-            Future {
-              Puzzle.solve3(
-                candidate,
-//                onFound
-                (solvedCandidate) => if (solvedCandidate.isSolved) onFound(solvedCandidate)
-              )
-            }
-          }
-        }
-    }
-  }
-
-  def solve4(p: Puzzle): Observable[Puzzle] = {
+  def solve(p: Puzzle)(implicit scheduler: Scheduler = ComputationScheduler()): Observable[Puzzle] = {
     p match {
       case p: SolvedPuzzle => Observable.just(p)
       case p: ImpossiblePuzzle => Observable.empty
@@ -336,8 +172,13 @@ object Puzzle {
               pv => unsolvedPuzzle.setCell(loc, pv)
             ))
           })
-          .subscribeOn( ComputationScheduler() )
-          .flatMap(Puzzle.solve4)
+          .subscribeOn( scheduler )
+//          .flatMap(p => {
+//            Observable.amb(
+//              Puzzle.solve(p),
+//              Puzzle.solve(p)(rx.lang.scala.schedulers.ImmediateScheduler()))
+//          })
+          .flatMap(Puzzle.solve)
     }
   }
 
@@ -399,54 +240,19 @@ object Puzzle {
 
 object Test{
   def main(args: Array[String]) {
-    val p = Puzzle()
+//    val p = Puzzle()
+    val p = FilePuzzleIO.read("test.puzzle")
 //    val p = FilePuzzleIO.read("hardest.puzzle")
-//    val p = FilePuzzleIO.read("test.puzzle")
 
     println("Start")
-//    val vList = List(1,9).map(Value(_))
-//    val c = Cell(vList)
     val t0 = System.nanoTime()
-//    c.removePossibleVal(1)
-//    c.removePossibleVal(8)
-    p.setCell(Loc(1,2),1)
-//    val solved = Puzzle.solve(p)
-    val t1 = System.nanoTime()
-    println("Elapsed time: " + (t1 - t0) + " ns")
-//    println(solved)
-//      Puzzle.solve4(p).take(1).subscribe((p) => {
-//        println(p)
-//        val t1 = System.nanoTime()
-//        println("Elapsed time: " + (t1 - t0) / 1000000000 + " s")
-//      }
-//    )
 
-//    scala.io.StdIn.readLine()
+    Puzzle.solve(p).head.subscribe((p) => {
+      val t1 = System.nanoTime()
+      println(p)
+      println("Elapsed time: " + (t1 - t0) + " ns")
+    })
 
-//    val o = Observable[Int]( s  => {
-//      s.onNext(1)
-//      s.onCompleted()
-//    })
-//
-//    val o2 = Observable[Int]( s  => {
-//      s.onNext(2)
-//      s.onCompleted()
-//    })
-//
-//    val o3 = o ++ o2
-//    println("11")
-//
-//    val future = async {
-//      val f1 = async { Thread.sleep(1000); true}
-//      val f2 = async { Thread.sleep(2000); 42}
-//      if (await(f1)) await(f2) else 0
-//    }
-//    future.onComplete {
-//      case r: Success() => println(r)
-//      case f: Failure => println(f)
-//    }
-//
-//    o3.subscribe(println(_))
-//    println("22")
+    scala.io.StdIn.readLine()
   }
 }

@@ -62,9 +62,9 @@ object FilePuzzleIO {
 }
 
 object WebPuzzleIO extends FlatSpec{
-//  implicit val webDriver: WebDriver = new HtmlUnitDriver
-  System.setProperty("webdriver.chrome.driver", "C:\\Users\\casafta\\Downloads\\chromedriver_win32\\chromedriver.exe")
-  val webDriver = new ChromeDriver
+  implicit val webDriver: WebDriver = new HtmlUnitDriver
+//  System.setProperty("webdriver.chrome.driver", "C:\\Users\\casafta\\Downloads\\chromedriver_win32\\chromedriver.exe")
+//  val webDriver = new ChromeDriver
   webDriver.get("http://view.websudoku.com/?level=4")
 
   def read: Puzzle = {
@@ -105,7 +105,7 @@ object WebPuzzleIO extends FlatSpec{
     def testForever(): Unit = {
       val p = WebPuzzleIO.read
       val t0 = System.nanoTime()
-      Puzzle.solve4(p).take(1).subscribe( solved => {
+      Puzzle.solve(p).take(1).subscribe(solved => {
         assert(WebPuzzleIO.writeAndTest(solved))
         val t1 = System.nanoTime()
         println("Elapsed time: " + (t1 - t0) + " ns")

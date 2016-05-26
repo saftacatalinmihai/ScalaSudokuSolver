@@ -1,5 +1,3 @@
-import java.util.Calendar
-
 import org.openqa.selenium.By
 import org.scalatest.{Matchers, FlatSpec}
 
@@ -60,36 +58,29 @@ class PuzzleSolve extends FlatSpec with Matchers{
     val pTest2 = FilePuzzleIO.read("test.puzzle")
     assert(!pTest2.isSolved)
     time {
-      val solved = Puzzle.solve(pTest2)
+      val solved = Puzzle.solve(pTest2).toBlocking.first
       println(solved)
-      solved.foreach(p => assert(p.isSolved))
+      assert(solved.isSolved)
     }
   }
 
   "Puzzles got from websudoku.com" should "be solved" in {
-    Puzzle.flatMappingAlgorithm = (solved, possiblePuzzle) =>  {
-      possiblePuzzle.par.flatMap(Puzzle.solve(_, solved)).toList
-    }
-    for ( i <- 1 to 10) {
+    for ( _ <- 1 to 10) {
       time {
-        val solved = Puzzle.solve(WebPuzzleIO.read)
-        assert(WebPuzzleIO.writeAndTest(solved.head))
+        val solved = Puzzle.solve(WebPuzzleIO.read).toBlocking.first
+        assert(WebPuzzleIO.writeAndTest(solved))
+        WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
       }
-      WebPuzzleIO.webDriver.findElement(By.name("newgame")).click()
     }
   }
 
   "The hardest sudoku puzzle" should "be solved" in {
     val pHardest = FilePuzzleIO.read("hardest.puzzle")
 
-    //    time {
-    //      val solved = Puzzle.solve2(pHardest)
-    //      solved should be (SolvedPuzzle(solved.cells))
-    //    }
     1 to 2 foreach {
       _ => {
         time {
-          val solved = Puzzle.solve2(pHardest)
+          val solved = Puzzle.solve(pHardest).toBlocking.first
           solved should be(SolvedPuzzle(solved.cells))
         }
       }
