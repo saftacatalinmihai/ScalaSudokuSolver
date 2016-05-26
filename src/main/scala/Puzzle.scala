@@ -158,7 +158,7 @@ object Puzzle {
       }
     }
 
-  def solve(p: Puzzle)(implicit scheduler: Scheduler = ComputationScheduler()): Observable[Puzzle] = {
+  def solve(p: Puzzle)(implicit scheduler: Scheduler = ComputationScheduler()): Observable[Puzzle] =
     p match {
       case p: SolvedPuzzle => Observable.just(p)
       case p: ImpossiblePuzzle => Observable.empty
@@ -173,14 +173,8 @@ object Puzzle {
             ))
           })
           .subscribeOn( scheduler )
-//          .flatMap(p => {
-//            Observable.amb(
-//              Puzzle.solve(p),
-//              Puzzle.solve(p)(rx.lang.scala.schedulers.ImmediateScheduler()))
-//          })
           .flatMap(Puzzle.solve)
     }
-  }
 
   def cellsByLeastPossibleVals(p: Puzzle): CellList =
     p.cells
@@ -241,8 +235,8 @@ object Puzzle {
 object Test{
   def main(args: Array[String]) {
 //    val p = Puzzle()
-    val p = FilePuzzleIO.read("test.puzzle")
-//    val p = FilePuzzleIO.read("hardest.puzzle")
+//    val p = FilePuzzleIO.read("test.puzzle")
+    val p = FilePuzzleIO.read("hardest.puzzle")
 
     println("Start")
     val t0 = System.nanoTime()
