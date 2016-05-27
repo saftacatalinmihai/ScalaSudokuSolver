@@ -4,6 +4,52 @@
 
 object ProjectEuler {
 
+  def time[R](block: => R): R = {
+    val t0 = System.nanoTime()
+    val result = block    // call-by-name
+    val t1 = System.nanoTime()
+    println("Elapsed time: " + (t1 - t0) + " ns")
+    result
+  }
+
+  def nextPrimeSieve(primes: List[Int]): Int = {
+    if (primes.isEmpty) 2
+    else {
+      def _nextPrime(candidate: Int): Int = {
+        if (primes.forall(candidate % _ != 0)) candidate
+        else _nextPrime(candidate + 1)
+      }
+      _nextPrime(primes.head + 1)
+    }
+  }
+
+  lazy val primes: Stream[Int] = 2 #:: primes.map(a => {
+    Stream.from(a + 1)
+      .find(b => primes.takeWhile(c => c * c <= b).forall(b % _ != 0)).get
+  })
+
+  def getPrimesUntil(until: Int) = {
+    primes.takeWhile(_ < until)
+  }
+
+  def factors( n: Int) : List[Int] = {
+    n :: ( 1 to n / 2 reverse).filter(n % _ == 0).toList
+  }
+
+  def factorsLong( n: Long) : List[Long] = {
+    n :: (1L to n / 2 reverse).filter(n % _ == 0).toList
+  }
+
+  def numOfFactors(n: Long): Int = 2 * (1L to Math.sqrt(n).toInt).count(n % _ == 0)
+
+  def divideInt(n: Int, p: Int): Int =
+    if (n % p != 0) n
+    else divideInt(n / p, p)
+
+  def divide(n: Long, p: Int): Long =
+    if (n % p != 0) n
+    else divide(n / p, p)
+
   def projectEuler1 = {
     Stream.from(1).filter(i => i % 3 == 0 || i % 5 == 0).takeWhile(_ < 1000).sum
   }
@@ -19,33 +65,7 @@ object ProjectEuler {
     fibSeq(4000000 - 1).filter(_ % 2 == 0).sum
   }
 
-  def nextPrimeSieve(primes: List[Int]): Int = {
-    if (primes.isEmpty) 2
-    else {
-      def _nextPrime(candidate: Int): Int = {
-        if (primes.forall(candidate % _ != 0)) candidate
-        else _nextPrime(candidate + 1)
-      }
-      _nextPrime(primes.head + 1)
-    }
-  }
-
-  def getPrimes(until: Int) = {
-
-    lazy val primes: Stream[Int] = 2 #:: primes.map(a => {
-        Stream.from(a + 1)
-          .find(b => primes.takeWhile(c => c * c <= b).forall(b % _ != 0)).get
-      }
-    )
-
-    primes.takeWhile(_ < until)
-  }
-
   def projectEuler3 = {
-
-    def divide(n: Long, p: Int): Long =
-      if (n % p != 0) n
-      else divide(n / p, p)
 
     def largestPrimeFactor(n: Long): Int = {
       def iterate(n: Long, primes: List[Int]): Int = {
@@ -115,7 +135,7 @@ object ProjectEuler {
   }
 
   def projectEuler10 = {
-    getPrimes(2000000).foldLeft(0L)(_+_)
+    getPrimesUntil(2000000).foldLeft(0L)(_+_)
   }
 
   def projectEuler11 = {
@@ -174,6 +194,17 @@ object ProjectEuler {
       .max
   }
 
+  def projectEuler12 = {
+
+    Stream
+      .from(1)                          // ints
+      .scan(0)(_ + _)                   // triangles
+      .map(t => t -> numOfFactors(t))   // triangles -> numOfFactors
+      .filter(_._2 >= 500)
+      .head
+
+  }
+
   def main(args: Array[String]) {
 //    assert(projectEuler1 == 233168)
 //    assert(projectEuler2 == 4613732)
@@ -186,6 +217,7 @@ object ProjectEuler {
 //    assert(projectEuler9 == 31875000)
 //    assert(projectEuler10 == 142913828922L)
 //    assert(projectEuler11 == 70600674)
+    assert(projectEuler12 == (76576500,576))
 
   }
 }

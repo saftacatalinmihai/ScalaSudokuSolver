@@ -1,9 +1,16 @@
-lazy val ps: Stream[Int] = 2 #:: ps.map(
-  i => Stream.from(i + 1)
-    .find(
-      j => ps.takeWhile(k => k * k <= j).forall(j % _ > 0)
-    )
-    .get)
 
-val r = ps.view.takeWhile(_ < 2000000).foldLeft(0L)(_ + _)
-//val r = ps.takeWhile(_ < 2000000).foldLeft(0L)(_ + _)
+def factors( n: Int) : List[Int] = {
+  n :: ( 1 to n / 2 reverse).filter(n % _ == 0).toList
+}
+
+def factorsLong( n: Long) : List[Long] = {
+  n :: ( 1L to n / 2 reverse).filter(n % _ == 0).toList
+}
+
+Stream
+  .from(1)                          // ints
+  .scan(0)(_ + _)                   // triangles
+  .map(t => t -> factorsLong(t))    // triangles -> factors
+  .map( t2 => {println(t2._2.length); t2})
+  .filter(_._2.length > 500)
+  .take(1)
