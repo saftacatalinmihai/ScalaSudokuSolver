@@ -340,6 +340,8 @@ object ProjectEuler {
 
   }
 
+  def projectEuler16 = BigInt(2).pow(1000).toString().map(_.asDigit).sum
+
   def main(args: Array[String]) {
 //    assert(projectEuler1 == 233168)
 //    assert(projectEuler2 == 4613732)
@@ -356,6 +358,7 @@ object ProjectEuler {
 //    assert(projectEuler13 == BigDecimal("5537376230390876637302048746832985971773659831892672"))
 //    assert(projectEuler14 == 837799)
 //    assert(projectEuler15 == 137846528820L)
+//    assert(projectEuler16 == 1366)
 
   }
 }
