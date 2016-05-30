@@ -1,5 +1,4 @@
 import scala.language.postfixOps
-
 /**
   * Created by casafta on 26/5/2016.
   */
@@ -313,6 +312,21 @@ object ProjectEuler {
     input.split("\\r?\\n").foldLeft(BigDecimal(0))(_ + BigDecimal(_))
   }
 
+  def projectEuler14 = {
+    def nextCollatz(n: Long): Long =
+      if ( n % 2 == 0 ) n / 2
+      else 3 * n + 1
+
+    def getCount(n: Long, count: Int = 1): Int =
+      if (n == 1) count
+      else getCount( nextCollatz(n), count + 1 )
+
+    (1 to 1000000)
+      .map(n => (n, getCount(n)))
+      .reduceLeft((x, y) => if (x._2 > y._2) x else y)
+      ._1
+  }
+
   def main(args: Array[String]) {
 //    assert(projectEuler1 == 233168)
 //    assert(projectEuler2 == 4613732)
@@ -327,6 +341,7 @@ object ProjectEuler {
 //    assert(projectEuler11 == 70600674)
 //    assert(projectEuler12 == (76576500,576))
 //    assert(projectEuler13 == BigDecimal("5537376230390876637302048746832985971773659831892672"))
+//    assert(projectEuler14 == 837799)
 
   }
 }
