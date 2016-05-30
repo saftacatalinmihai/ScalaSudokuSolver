@@ -330,19 +330,39 @@ object ProjectEuler {
   def projectEuler15 = {
     val squareLen = 20
 
-    def pascalTriangleRowStream(aboveRow: List[Long] = List(1L, 1L)): Stream[List[Long]] =
-      aboveRow #:: pascalTriangleRowStream(
-        1L :: aboveRow.sliding(2).map(_.sum).toList ::: List(1L)
+    lazy val pascalTriangleRowStream: Stream[List[Long]] =
+      List(1L, 1L) #:: pascalTriangleRowStream.map( pascalLine =>
+        1L :: pascalLine.sliding(2).map(_.sum).toList ::: List(1L)
       )
 
-    val pascalRow = pascalTriangleRowStream().take(squareLen * 2).last
+    val pascalRow = pascalTriangleRowStream.take(squareLen * 2).last
     pascalRow(pascalRow.length / 2)
 
   }
 
   def projectEuler16 = BigInt(2).pow(1000).toString().map(_.asDigit).sum
 
+  def projectEuler17 = {
+    var numToStr: Map[Int, String] = Map(
+      1 -> "one",
+      2 -> "two",
+      3 -> "three",
+      4 -> "for",
+      5 -> "five",
+      6 -> "six",
+      7 -> "seven",
+      8 -> "eight",
+      9 -> "nine",
+      10 -> "ten",
+      11 -> "eleven",
+      12 -> "twelve"
+    )
+    (13 to 19).map( i => ( i -> {numToStr(i - 10) + "teen"}) )
+//    numToStr
+  }
+
   def main(args: Array[String]) {
+
 //    assert(projectEuler1 == 233168)
 //    assert(projectEuler2 == 4613732)
 //    assert(projectEuler3 == 6857)
@@ -360,5 +380,6 @@ object ProjectEuler {
 //    assert(projectEuler15 == 137846528820L)
 //    assert(projectEuler16 == 1366)
 
+    println(projectEuler17)
   }
 }
