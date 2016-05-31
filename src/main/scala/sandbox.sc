@@ -1,51 +1,40 @@
-var numToStr: Map[Int, String] = Map(
-  1 -> "one",
-  2 -> "two",
-  3 -> "three",
-  4 -> "for",
-  5 -> "five",
-  6 -> "six",
-  7 -> "seven",
-  8 -> "eight",
-  9 -> "nine",
-  10 -> "ten",
-  11 -> "eleven",
-  12 -> "twelve",
-  13 -> "thirteen",
-  14 -> "fourteen",
-  15 -> "fifteen",
-  16 -> "sixteen",
-  17 -> "seventeen",
-  18 -> "eighteen",
-  19 -> "nineteen",
-  20 -> "twenty",
-  30 -> "thirty",
-  40 -> "forty",
-  50 -> "fifty",
-  60 -> "sixty",
-  70 -> "seventy",
-  80 -> "eighty",
-  90 -> "ninety",
-  1000 -> "one thousand"
-)
+val triangle =
+  """75
+    |95 64
+    |17 47 82
+    |18 35 87 10
+    |20 04 82 47 65
+    |19 01 23 75 03 34
+    |88 02 77 73 07 63 67
+    |99 65 04 28 06 16 70 92
+    |41 41 26 56 83 40 80 70 33
+    |41 48 72 33 47 32 37 16 94 29
+    |53 71 44 65 25 43 91 52 97 51 14
+    |70 11 33 28 77 73 17 78 39 68 17 57
+    |91 71 52 38 17 14 91 43 58 50 27 29 48
+    |63 66 04 68 89 53 67 30 73 16 69 87 40 31
+    |04 62 98 27 23 09 70 98 73 93 38 53 60 04 23
+  """.stripMargin.split("\\r?\\n").map(_.split(" ").map(_.toInt).toList)
 
-// 20 - 99
-(2 to 9).foreach { dec =>
-  ( (dec * 10 + 1) to (dec * 10 + 9)).foreach( i => numToStr += (i -> (numToStr(dec * 10) + " " + numToStr(i - dec * 10) )))
+class Path(val p: List[Int], val headPos: Int){
+  val runningSum: Int = p.sum
+  val head: Int = p.head
+  def append(value: Int, headPos: Int = this.headPos) = {
+    assert(headPos >= this.headPos && headPos <= this.headPos + 1)
+    new Path(value::p, headPos)
+  }
+  override def toString = s"Sum: $runningSum , headPos: $headPos , path: $p"
 }
 
-// 100 - 900 (hundreds)
-( 1 to 9 ).foreach( i => numToStr += ( i * 100 -> (numToStr(i) + " hundred")))
-
-// 101 - 999 (hundreds decimals)
-(101 to 999).filter(_ % 100 != 0).foreach( i => numToStr += ( i -> (numToStr(i / 100 * 100 ) + " and " + numToStr(i % 100))))
-
-// Calc
-(1 to 1000)
-  .map(numToStr)
-  .map(_.replace(" ", ""))
-  .map(_.length)
-//  .sum
-  .foreach(println)
-//numToStr
-//( 1 to 1000).map(numToStr).foreach(println)
+(1 until triangle.length - 1)
+  .map(triangle(_))
+  .foldLeft(List(new Path(triangle.head, 0)))(
+    (paths, nextLine) => {
+      paths.flatMap( p => {
+        List(
+          p.append(nextLine(p.headPos)),
+          p.append(nextLine(p.headPos + 1), p.headPos + 1))
+      })
+    })
+  .maxBy(_.runningSum)
+  .runningSum
