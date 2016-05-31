@@ -29,18 +29,23 @@ var numToStr: Map[Int, String] = Map(
   1000 -> "one thousand"
 )
 
-( 21 to 29).foreach( i => numToStr += (i -> (numToStr(20) + " " + numToStr(i - 20) )))
-( 31 to 39).foreach( i => numToStr += (i -> (numToStr(30) + " " + numToStr(i - 30) )))
-( 41 to 49).foreach( i => numToStr += (i -> (numToStr(40) + " " + numToStr(i - 40) )))
-( 51 to 59).foreach( i => numToStr += (i -> (numToStr(50) + " " + numToStr(i - 50) )))
-( 61 to 69).foreach( i => numToStr += (i -> (numToStr(60) + " " + numToStr(i - 60) )))
-( 71 to 79).foreach( i => numToStr += (i -> (numToStr(70) + " " + numToStr(i - 70) )))
-( 81 to 89).foreach( i => numToStr += (i -> (numToStr(80) + " " + numToStr(i - 80) )))
-( 91 to 99).foreach( i => numToStr += (i -> (numToStr(90) + " " + numToStr(i - 90) )))
+// 20 - 99
+(2 to 9).foreach { dec =>
+  ( (dec * 10 + 1) to (dec * 10 + 9)).foreach( i => numToStr += (i -> (numToStr(dec * 10) + " " + numToStr(i - dec * 10) )))
+}
 
+// 100 - 900 (hundreds)
 ( 1 to 9 ).foreach( i => numToStr += ( i * 100 -> (numToStr(i) + " hundred")))
 
+// 101 - 999 (hundreds decimals)
 (101 to 999).filter(_ % 100 != 0).foreach( i => numToStr += ( i -> (numToStr(i / 100 * 100 ) + " and " + numToStr(i % 100))))
 
-(1 to 1000).map(numToStr(_)).map(_.filter(_ != " ")).map(_.length).sum
-numToStr
+// Calc
+(1 to 1000)
+  .map(numToStr)
+  .map(_.replace(" ", ""))
+  .map(_.length)
+//  .sum
+  .foreach(println)
+//numToStr
+//( 1 to 1000).map(numToStr).foreach(println)
