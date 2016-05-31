@@ -440,6 +440,76 @@ object ProjectEuler {
     maxPathInTriangle(triangle.toList)
   }
 
+  def projectEuler19 = {
+    val monthToString: Map[Int, String] = Map(
+      1 -> "January",
+      2 -> "February",
+      3 -> "March",
+      4 -> "April",
+      5 -> "May",
+      6 -> "June",
+      7 -> "July",
+      8 -> "August",
+      9 -> "September",
+      10 -> "October",
+      11 -> "November",
+      12 -> "December"
+    )
+
+    object Date{
+      def isLeapYear(d: Date): Boolean =
+        if ( d.year % 100 == 0) {
+          if (d.year % 400 == 0 ) true
+          else false
+        } else if (d.year % 4 == 0) true
+        else false
+    }
+    class Date(val day: Int, val month: Int, val year: Int) {
+      override def toString = s"$day " + monthToString(month) + s" $year"
+      def next: Date =
+        if (month == 12 && day == 31) new Date(1, 1, year + 1)
+        else if ( day == 30 && List("September", "April", "June", "November").contains(monthToString(month)) ) new Date(1, month + 1, year)
+        else if ( ! Date.isLeapYear(this) && month == 2 && day == 28 ) new Date(1, month + 1, year)
+        else if ( Date.isLeapYear(this) && month == 2 && day == 29 ) new Date(1, month + 1, year)
+        else if ( day == 31 ) new Date(1, month + 1, year)
+        else new Date(day + 1, month, year)
+      def equals(other: Date): Boolean = other.day == day && other.month == month && other.year == year
+    }
+
+    class Weekday
+    case class Monday() extends Weekday
+    case class Tuesday() extends Weekday
+    case class Wednesday() extends Weekday
+    case class Thursday() extends Weekday
+    case class Friday() extends Weekday
+    case class Saturday() extends Weekday
+    case class Sunday() extends Weekday
+
+    object Weekday {
+      def next(w: Weekday): Weekday = w match {
+        case w: Monday => new Tuesday()
+        case w: Tuesday => new Wednesday()
+        case w: Wednesday => new Thursday()
+        case w: Thursday => new Friday()
+        case w: Friday => new Saturday()
+        case w: Saturday => new Sunday()
+        case w: Sunday => new Monday()
+      }
+    }
+
+    lazy val dateStream: Stream[Map[Date, Weekday]] = Map(new Date(1, 1, 1900) -> new Monday()) #:: dateStream.map( m => Map(m.keys.head.next -> Weekday.next(m.values.head)))
+
+    dateStream.takeWhile(m => !m.keys.head.equals(new Date(1, 1, 2001)))
+      .filter(m => m.keys.head.year != 1900)
+      .count(m => {
+        val (date, week) = (m.keys.head, m.values.head)
+        week match {
+          case w: Sunday => if (date.day == 1) true else false
+          case _ => false
+        }
+      })
+  }
+
   def main(args: Array[String]) {
 
 //    assert(projectEuler1 == 233168)
@@ -459,9 +529,9 @@ object ProjectEuler {
 //    assert(projectEuler15 == 137846528820L)
 //    assert(projectEuler16 == 1366)
 //    assert(projectEuler17 == 21124)
-    assert(projectEuler18 == 1074)
-    assert(projectEuler67 == 7273)
-
+//    assert(projectEuler18 == 1074)
+//    assert(projectEuler67 == 7273)
+//    assert(projectEuler19 == 171)
 
   }
 }
