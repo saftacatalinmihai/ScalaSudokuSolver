@@ -13,9 +13,18 @@ val triangle =
     |70 11 33 28 77 73 17 78 39 68 17 57
     |91 71 52 38 17 14 91 43 58 50 27 29 48
     |63 66 04 68 89 53 67 30 73 16 69 87 40 31
-    |04 62 98 27 23 09 70 98 73 93 38 53 60 04 23
-  """.stripMargin.split("\\r?\\n").map(_.split(" ").map(_.toInt).toList)
+    |04 62 98 27 23 09 70 98 73 93 38 53 60 04 23""".stripMargin.split("\\r?\\n").map(_.split(" ").map(_.toInt).toList)
 
+triangle.reverse.reduce(
+  (below, above) => {
+    above.indices.map(
+      i =>
+        if (below(i) > below(i + 1)) above(i) + below(i)
+        else above(i) + below(i + 1)
+    ).toList
+  }
+).head
+/*
 class Path(val p: List[Int], val headPos: Int){
   val runningSum: Int = p.sum
   val head: Int = p.head
@@ -38,3 +47,4 @@ class Path(val p: List[Int], val headPos: Int){
     })
   .maxBy(_.runningSum)
   .runningSum
+  /*

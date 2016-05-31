@@ -1,4 +1,6 @@
 import scala.language.postfixOps
+import scala.io.Source
+
 /**
   * Created by casafta on 26/5/2016.
   */
@@ -416,27 +418,24 @@ object ProjectEuler {
         |04 62 98 27 23 09 70 98 73 93 38 53 60 04 23
       """.stripMargin.split("\\r?\\n").map(_.split(" ").map(_.toInt).toList)
 
-    class Path(val p: List[Int], val headPos: Int){
-      val sum: Int = p.sum
-      def append(value: Int, headPos: Int = this.headPos) = {
-        assert(headPos >= this.headPos && headPos <= this.headPos + 1)
-        new Path(value::p, headPos)
+    triangle.reverse.reduce(
+      (below, above) => {
+        above.indices.map(
+          i =>
+            if (below(i) > below(i + 1)) above(i) + below(i)
+            else above(i) + below(i + 1)
+        ).toList
       }
-      override def toString = s"Sum: $sum , headPos: $headPos , path: $p"
-    }
+    ).head
+  }
 
-    (1 until triangle.length - 1)
-      .map(triangle(_))
-      .foldLeft(List(new Path(triangle.head, 0)))(
-        (paths, nextLine) => {
-          paths.flatMap( p => {
-            List(
-              p.append(nextLine(p.headPos)),
-              p.append(nextLine(p.headPos + 1), p.headPos + 1))
-          })
-        })
-      .maxBy(_.sum)
-      .sum
+  def projectEuler67 = {
+
+    val filename = "p067_triangle.txt"
+    val triangle = for (line <- Source.fromFile(filename).getLines()) yield {
+      line.split(" ").map(_.toInt).toList
+    }
+    1
   }
 
   def main(args: Array[String]) {
